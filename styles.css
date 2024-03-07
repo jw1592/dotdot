@@ -4,26 +4,15 @@ body {
     position: relative;
 }
 
-#dot {
+.dot {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    background-color: black;
-    border-radius: 50%;
 }
 
-#context-menu {
+.dotName {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    border-radius: 5px;
-    z-index: 10;
+    text-shadow: 1px 1px 1px #000;
+    color: #FFF;
+    font-size: 12px;
 }
 
 .menuItem {
