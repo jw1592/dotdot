@@ -4,70 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dot Following Mouse Cursor</title>
-    <style>
-        /** CSS 코드 작성 **/
-        body {
-            margin: 0;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #dot {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: black;
-            border-radius: 50%;
-        }
-
-        #context-menu {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 5px;
-            z-index: 10;
-        }
-
-        .menuItem {
-            margin-bottom: 10px;
-        }
-
-        button {
-            background-color: white;
-            border: 1px solid #ccc;
-            padding: 5px;
-            cursor: pointer;
-        }
-
-            button:hover {
-                background-color: #f0f0f0;
-            }
-
-        label, input, span {
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="dot"></div>
     <div id="context-menu">
         <div class="menuItem">
-            <span>Speed: </span>
-            <button id="btn-speed-minus">-</button>
-            <span id="speed">10</span>
-            <button id="btn-speed-plus">+</button>
+            <label for="speed-slider">Speed: </label>
+            <input id="speed-slider" type="range" min="1" max="100" value="30">
+            <span id="speed">30</span>
         </div>
         <div class="menuItem">
-            <span>Size: </span>
-            <button id="btn-size-minus">-</button>
+            <label for="size-slider">Size: </label>
+            <input id="size-slider" type="range" min="1" max="100" value="10">
             <span id="size">10</span>
-            <button id="btn-size-plus">+</button>
         </div>
         <div class="menuItem">
             <label for="color-picker">Color: </label>
@@ -75,85 +25,6 @@
             <span id="color-text">#000000</span>
         </div>
     </div>
-    <script>/** JavaScript 코드 작성 **/
-
-        const dot = document.getElementById("dot");
-let speed = 10; // 10px per second
-let mouseX = 0;
-let mouseY = 0;
-let currentX = window.innerWidth / 2;
-let currentY = window.innerHeight / 2;
-let lastTimestamp = 0;
-
-// Set dot to the center of the screen initially
-dot.style.left = currentX - dot.offsetWidth / 2 + "px";
-dot.style.top = currentY - dot.offsetHeight / 2 + "px";
-
-document.addEventListener("mousemove", (event) => {
-    mouseX = event.pageX;
-    mouseY = event.pageY;
-});
-
-function updateDotPosition(timestamp) {
-    const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
-    lastTimestamp = timestamp;
-
-    const distanceX = mouseX - currentX;
-    const distanceY = mouseY - currentY;
-    const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
-
-    if (distance > 0) {
-        const moveX = (distanceX / distance) * speed * deltaTime;
-        const moveY = (distanceY / distance) * speed * deltaTime;
-        currentX += moveX;
-        currentY += moveY;
-
-        dot.style.left = currentX - dot.offsetWidth / 2 + "px";
-        dot.style.top = currentY - dot.offsetHeight / 2 + "px";
-    }
-
-    requestAnimationFrame(updateDotPosition);
-}
-
-requestAnimationFrame(updateDotPosition);
-
-const btnSpeedMinus = document.getElementById("btn-speed-minus");
-const btnSpeedPlus = document.getElementById("btn-speed-plus");
-const speedDisplay = document.getElementById("speed");
-const colorPicker = document.getElementById("color-picker");
-const colorText = document.getElementById("color-text");
-const btnSizeMinus = document.getElementById("btn-size-minus");
-const btnSizePlus = document.getElementById("btn-size-plus");
-const sizeDisplay = document.getElementById("size");
-
-btnSpeedMinus.addEventListener("click", () => {
-    speed = Math.max(speed - 1, 1);
-    speedDisplay.innerText = speed;
-});
-
-btnSpeedPlus.addEventListener("click", () => {
-    speed++;
-    speedDisplay.innerText = speed;
-});
-
-colorPicker.addEventListener("input", (event) => {
-    dot.style.backgroundColor = event.target.value;
-    colorText.innerText = event.target.value;
-});
-
-btnSizeMinus.addEventListener("click", () => {
-    const newSize = Math.max(dot.offsetWidth - 1, 1);
-    dot.style.width = newSize + "px";
-    dot.style.height = newSize + "px";
-    sizeDisplay.innerText = newSize;
-});
-
-btnSizePlus.addEventListener("click", () => {
-    const newSize = dot.offsetWidth + 1;
-    dot.style.width = newSize + "px";
-    dot.style.height = newSize + "px";
-    sizeDisplay.innerText = newSize;
-});
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
