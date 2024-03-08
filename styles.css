@@ -20,6 +20,7 @@ body {
 }
 
 .nickname {
-    font-size: 12px;
+    font-size: 8px;
     text-align: center;
+    text-decoration: underline;
 }
