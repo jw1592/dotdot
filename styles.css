@@ -1,35 +1,12 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-body {
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
+canvas {
+  display: block;
+  background: #f0f0f0;
 }
-
-.dot {
-    position: absolute;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-}
-
-.dot.local {
-    z-index: 2;
-}
-
-.nickname {
-    font-size: 8px;
-    text-align: center;
-    text-decoration: underline;
-    position: absolute; /* 추가 */
-    bottom: -15px; /* 추가 */
-    width: 100%; /* 추가 */
-}
-
