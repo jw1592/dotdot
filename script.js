@@ -1,39 +1,9 @@
-const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"]; // 더 추가 가능
-const dotWrapper = document.querySelector('.dotWrapper');
-const localDots = new Map();
-const remoteDots = new Map();
-const localId = Date.now().toString();
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateRandomAnimal() {
-  const index = getRandomInt(0, animals.length - 1);
-  return animals[index] + getRandomInt(10000, 99999);
-}
-
-function createDot(id, nicknameText, color) {
-  const dot = document.createElement("div");
-  dot.id = id;
-  dot.className = "dot";
-
-  const nickname = document.createElement("span");
-  nickname.className = "nickname";
-  nickname.innerText = nicknameText || generateRandomAnimal();
-  dot.appendChild(nickname);
-
-  const size = 10; // 기본 크기 변경 가능
-  dot.style.width = `${size}px`;
-  dot.style.height = `${size}px`;
-  dot.style.backgroundColor = color || `rgb(${getRandomInt(0, 255)}, ${getRandomInt(0, 255)}, ${getRandomInt(0, 255)})`;
-
-  return dot;
-}
+const speed = 20; // px per second
+const updateRate = 1000 / 60; // 60fps
 
 function moveDotTo(dot, x, y) {
-  dot.style.left = `${x}px`;
-  dot.style.top = `${y}px`;
+  dot.style.left = `${x - dot.clientWidth / 2}px`;
+  dot.style.top = `${y - dot.clientHeight / 2}px`;
 }
 
 function setupMyDot() {
@@ -51,13 +21,11 @@ function setupMyDot() {
     clickY = e.clientY;
   });
 
-  const speed = 20; // px per second
-  const updateRate = 1000 / 60; // 60fps
   setInterval(() => {
     if (typeof clickX !== "undefined" && typeof clickY !== "undefined") {
       const rect = myDot.getBoundingClientRect();
-      const currentX = rect.x;
-      const currentY = rect.y;
+      const currentX = rect.x + myDot.clientWidth / 2;
+      const currentY = rect.y + myDot.clientHeight / 2;
 
       const distanceX = clickX - currentX;
       const distanceY = clickY - currentY;
@@ -72,7 +40,7 @@ function setupMyDot() {
   }, updateRate);
 }
 
-// ... (WebRTC-related code) ...
+// ... (이전 코드와 동일한 WebRTC 관련 코드) ...
 
 document.addEventListener('DOMContentLoaded', () => {
   setupMyDot();
