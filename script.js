@@ -1,6 +1,9 @@
+const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"]; //add back
 const dotWrapper = document.querySelector('.dotWrapper');
 const localDots = new Map();
 const remoteDots = new Map();
+const localId = Date.now().toString();
+const myPeer = new Peer(localId);
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -50,5 +53,53 @@ function setupMyDot() {
 document.addEventListener('DOMContentLoaded', () => {
     setupMyDot();
     
-    // Add WebRTC code for peer-to-peer connection
+    myPeer.on('open', id => {
+        console.log('Peers connection opened with id:', id);
+    });
+
+    myPeer.on('connection', conn => {
+        console.log('New peer connected:', conn.peer);
+
+        const dot = createDot(conn.peer);
+        dotWrapper.appendChild(dot);
+        remoteDots.set(conn.peer, dot);
+
+        conn.on('data', data => {
+            if (data.type === "move-dot") {
+                moveDotTo(dot, data.x, data.y);
+            }
+        });
+
+        conn.on('close', () => {
+            console.log('Peer connection closed:', conn.peer);
+            dot.remove();
+            remoteDots.delete(conn.peer);
+        });
+    });
+
+    document.getElementById('send').addEventListener('click', () => {
+        const targetId = document.getElementById('targetId').value;
+        const conn = myPeer.connect(targetId);
+        console.log('Peer connection opened:', targetId);
+        
+        conn.on('open', () => {
+            const dot = createDot(targetId);
+            dotWrapper.appendChild(dot);
+            remoteDots.set(targetId, dot);
+
+            conn.on('data', data => {
+                if (data.type === "move-dot") {
+                    moveDotTo(dot, data.x, data.y);
+                }
+            });
+
+            conn.on('close', () => {
+                console.log('Peer connection closed:', targetId);
+                dot.remove();
+                remoteDots.delete(targetId);
+            });
+
+            broadcastDotMovement(localDots.get(localId), conn);
+        });
+    });
 });
