@@ -1,105 +1,34 @@
-const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"]; //add back
-const dotWrapper = document.querySelector('.dotWrapper');
-const localDots = new Map();
-const remoteDots = new Map();
-const localId = Date.now().toString();
-const myPeer = new Peer(localId);
+// app.js
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+// Create a map using Leaflet.js
+const map = L.map('map').setView([0, 0], 1); // Default location: World view
+
+// Add a tile layer (you can choose any other tile provider)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Initialize an empty array to store user markers
+const userMarkers = [];
+
+// Function to add a user marker
+function addUserMarker(lat, lng, nickname) {
+    const marker = L.circleMarker([lat, lng], { radius: 5, color: '#0074D9' }).addTo(map);
+    userMarkers.push(marker);
+
+    // Add nickname as a tooltip
+    marker.bindTooltip(nickname, { permanent: true, direction: 'top', className: 'user-nickname' });
 }
 
-function generateRandomAnimal() {
-    const index = getRandomInt(0, animals.length - 1);
-    return animals[index] + getRandomInt(10000, 99999);
+// Simulate user connections (you can replace this with actual WebRTC logic)
+addUserMarker(0, 0, 'Tiger_123'); // User 1
+addUserMarker(10, 20, 'Elephant_456'); // User 2
+addUserMarker(-30, 15, 'Giraffe_789'); // User 3
+
+// You can add more users by calling addUserMarker(lat, lng, nickname) with their coordinates and nicknames
+
+// Center the map on the average location of all users
+if (userMarkers.length > 0) {
+    const bounds = L.latLngBounds(userMarkers.map(marker => marker.getLatLng()));
+    map.fitBounds(bounds);
 }
-
-function createDot(id, nicknameText, color) {
-    const dot = document.createElement("div");
-    dot.id = id;
-    dot.className = "dot";
-
-    if (id === localId) {
-        dot.classList.add("local");
-    }
-
-    const nickname = document.createElement("span");
-    nickname.className = "nickname";
-    nickname.innerText = nicknameText || generateRandomAnimal();
-    dot.appendChild(nickname);
-
-    const size = 10;
-    dot.style.width = `${size}px`;
-    dot.style.height = `${size}px`;
-    dot.style.backgroundColor = color || `rgb(${getRandomInt(0, 255)}, ${getRandomInt(0, 255)}, ${getRandomInt(0, 255)})`;
-
-    return dot;
-}
-
-function moveDotTo(dot, x, y) {
-    dot.style.left = `${x - dot.clientWidth / 2}px`;
-    dot.style.top = `${y - dot.clientHeight / 2}px`;
-}
-
-const speed = 20;
-const updateRate = 1000 / 60;
-
-function setupMyDot() {
-    const myDot = createDot(localId);
-    dotWrapper.appendChild(myDot);
-    localDots.set(localId, myDot);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    setupMyDot();
-    
-    myPeer.on('open', id => {
-        console.log('Peers connection opened with id:', id);
-    });
-
-    myPeer.on('connection', conn => {
-        console.log('New peer connected:', conn.peer);
-
-        const dot = createDot(conn.peer);
-        dotWrapper.appendChild(dot);
-        remoteDots.set(conn.peer, dot);
-
-        conn.on('data', data => {
-            if (data.type === "move-dot") {
-                moveDotTo(dot, data.x, data.y);
-            }
-        });
-
-        conn.on('close', () => {
-            console.log('Peer connection closed:', conn.peer);
-            dot.remove();
-            remoteDots.delete(conn.peer);
-        });
-    });
-
-    document.getElementById('send').addEventListener('click', () => {
-        const targetId = document.getElementById('targetId').value;
-        const conn = myPeer.connect(targetId);
-        console.log('Peer connection opened:', targetId);
-        
-        conn.on('open', () => {
-            const dot = createDot(targetId);
-            dotWrapper.appendChild(dot);
-            remoteDots.set(targetId, dot);
-
-            conn.on('data', data => {
-                if (data.type === "move-dot") {
-                    moveDotTo(dot, data.x, data.y);
-                }
-            });
-
-            conn.on('close', () => {
-                console.log('Peer connection closed:', targetId);
-                dot.remove();
-                remoteDots.delete(targetId);
-            });
-
-            broadcastDotMovement(localDots.get(localId), conn);
-        });
-    });
-});
