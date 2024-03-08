@@ -1,116 +1,135 @@
-// Helper function to generate a random color
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
+const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"]; // 더 추가 가능
+const dotWrapper = document.querySelector('.dotWrapper');
+const localDots = new Map();
+const remoteDots = new Map();
+const localId = Date.now().toString();
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateRandomAnimal() {
+  const index = getRandomInt(0, animals.length - 1);
+  return animals[index] + getRandomInt(10000, 99999);
+}
+
+function createDot(id, nicknameText, color) {
+  const dot = document.createElement("div");
+  dot.id = id;
+  dot.className = "dot";
+
+  const nickname = document.createElement("span");
+  nickname.className = "nickname";
+  nickname.innerText = nicknameText || generateRandomAnimal();
+  dot.appendChild(nickname);
+
+  const size = 10; // 기본 크기 변경 가능
+  dot.style.width = `${size}px`;
+  dot.style.height = `${size}px`;
+  dot.style.backgroundColor = color || `rgb(${getRandomInt(0, 255)}, ${getRandomInt(0, 255)}, ${getRandomInt(0, 255)})`;
+
+  return dot;
+}
+
+function moveDotTo(dot, x, y) {
+  dot.style.left = `${x}px`;
+  dot.style.top = `${y}px`;
+}
+
+function setupMyDot() {
+  const myDot = createDot(localId);
+  dotWrapper.appendChild(myDot);
+  localDots.set(localId, myDot);
+
+  document.addEventListener("mousemove", (e) => {
+    moveDotTo(myDot, e.clientX, e.clientY);
+    broadcastDotMovement(myDot);
+  });
+}
+
+// WebRTC data channel functions
+const peerConnections = new Map();
+const dataChannels = new Map();
+
+async function broacastHello() {
+  console.log("Broadcasting hello");
+}
+
+async function createPeerConnection(targetId) {
+  const peerConnection = new RTCPeerConnection();
+
+  const dataChannel = peerConnection.createDataChannel('dotMovement');
+  dataChannels.set(targetId, dataChannel);
+
+  dataChannel.onopen = (e) => {
+    console.log("Data channel opened:", targetId);
+  }
+
+  dataChannel.onclose = (e) => {
+    console.log("Data channel closed:", targetId);
+  }
+
+  dataChannel.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === "add-dot") {
+      const dot = createDot(data.id, data.nickname, data.color);
+      dotWrapper.appendChild(dot);
+      remoteDots.set(data.id, dot);
+    } else if (data.type === "move-dot") {
+      const dot = remoteDots.get(data.id);
+      if (dot) {
+        moveDotTo(dot, data.x, data.y);
+      }
     }
-    return color;
+  }
+  
+  peerConnection.onicecandidate = ({candidate}) => {
+    console.log("New ICE candidate:", candidate);
+  }
+
+  peerConnections.set(targetId, peerConnection);
+  return peerConnection;
 }
 
-// Random animal names
-const animalNames = ['Dog', 'Cat', 'Elephant', 'Giraffe', 'Tiger', 'Lion', 'Panda', 'Zebra', 'Monkey', 'Squirrel', 'Kangaroo', 'Raccoon', 'Hippopotamus', 'Fox', 'Koala', 'Alligator', 'Penguin', 'Bear', 'Wolf', 'Deer'];
-
-// Returns a random animal name
-function getRandomAnimalName() {
-    return animalNames[Math.floor(Math.random() * animalNames.length)];
+function broadcastDotMovement(myDot) {
+  const rect = myDot.getBoundingClientRect();
+  dataChannels.forEach((dataChannel, targetId) => {
+    const data = {
+      type: "move-dot",
+      id: localId,
+      x: rect.x,
+      y: rect.y
+    };
+    dataChannel.send(JSON.stringify(data));
+  });
 }
 
-// Assign a random color to the user's dot and create a name
-const myDot = document.getElementById('myDot');
-const myColor = getRandomColor();
-const myName = getRandomAnimalName();
-myDot.style.backgroundColor = myColor;
+// The following function is for demonstration purposes and is not a production ready signaling server solution
+async function hackySignaling() {
+  const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+  const data = await response.json();
+  const dummyId = data.id.toString();
+  const peerConnection = await createPeerConnection(dummyId);
+  
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
 
-// Create dot with a random name
-function createDot(id, color, name) {
-    const dotContainer = document.createElement("div");
-    dotContainer.id = id;
-    const newDot = document.createElement("div");
-    newDot.className = "dot";
-    newDot.style.backgroundColor = color;
-    dotContainer.appendChild(newDot);
-    const dotName = document.createElement("div");
-    dotName.className = "dotName";
-    dotName.innerText = name;
-    dotContainer.appendChild(dotName);
-    return dotContainer;
+  await new Promise(resolve => setTimeout(resolve, 2000)); // simulate signaling delay
+
+  peerConnection.setRemoteDescription(peerConnection.localDescription);
+  peerConnection.addIceCandidate(null);
+
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  await new Promise(resolve => setTimeout(resolve, 2000)); // simulate signaling delay
+
+  peerConnection.setRemoteDescription(peerConnection.localDescription);
+
+  broacastHello();
 }
 
-// Populate the otherDots container with the new dot
-const otherDots = document.getElementById("otherDots");
-function addUserDot(id, color, name) {
-    const newDot = createDot(id, color, name);
-    otherDots.appendChild(newDot);
-    return newDot;
-}
-
-// Update dot's position
-function updateDotPosition(dot, x, y) {
-    dot.style.left = x + "px";
-    dot.style.top = y + "px";
-}
-
-// Initialize context menu
-const speedSlider = document.getElementById("speed-slider");
-const speedDisplay = document.getElementById("speed");
-const sizeSlider = document.getElementById("size-slider");
-const sizeDisplay = document.getElementById("size");
-const colorPicker = document.getElementById("color-picker");
-const colorText = document.getElementById("color-text");
-
-speedSlider.addEventListener("input", (event) => {
-    speed = parseInt(event.target.value, 10);
-    speedDisplay.innerText = speed;
+document.addEventListener('DOMContentLoaded', () => {
+  setupMyDot();
+  hackySignaling();
 });
-
-sizeSlider.addEventListener("input", (event) => {
-    const newSize = parseInt(event.target.value, 10);
-    myDot.style.width = newSize + "px";
-    myDot.style.height = newSize + "px";
-    sizeDisplay.innerText = newSize;
-});
-
-colorPicker.addEventListener("input", (event) => {
-    myDot.style.backgroundColor = event.target.value;
-    myColor = event.target.value;
-    colorText.innerText = event.target.value;
-});
-
-// Your previous code here...
-
-// ...
-const peerInfo = {
-    id: Date.now(),
-    color: myColor,
-    name: myName,
-};
-
-// Send dot's position and color to connected peers
-function sendDotData(x, y, color, name) {
-    if (dataChannel && dataChannel.readyState === 'open') {
-        const data = JSON.stringify({x, y, color, name, id: peerInfo.id});
-        dataChannel.send(data);
-    }
-}
-
-// Receive and handle the message
-function receiveMessage(event) {
-    const payload = JSON.parse(event.data);
-    let otherDot = document.getElementById(payload.id);
-    if (!otherDot) {
-        otherDot = addUserDot(payload.id, payload.color, payload.name);
-    }
-    updateDotPosition(otherDot, payload.x, payload.y);
-}
-
-// Your previous code here...
-
-// 마우스 이벤트 리스너를 변경하여 위치와 색상을 전송하게 만듭니다.
-document.addEventListener("mousemove", (event) => {
-    mouseX = event.pageX;
-    mouseY = event.pageY;
-    sendDotData(mouseX, mouseY, myColor, myName);
-});
-
-// Your previous code here...
