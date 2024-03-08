@@ -1,9 +1,6 @@
-const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"];
 const dotWrapper = document.querySelector('.dotWrapper');
 const localDots = new Map();
 const remoteDots = new Map();
-const localId = Date.now().toString();
-const myPeer = new Peer(localId);
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -47,13 +44,11 @@ const updateRate = 1000 / 60;
 function setupMyDot() {
     const myDot = createDot(localId);
     dotWrapper.appendChild(myDot);
+    localDots.set(localId, myDot);
+}
 
-    // Connect to the dot with the nickname as its ID
-    const targetId = myDot.firstChild.innerText;
-    const conn = myPeer.connect(targetId);
-    console.log('Peer connection opened:', targetId);
-
-    conn.on('open', () => {
-        const dot = createDot(targetId);
-        dotWrapper.appendChild(dot);
-        remoteDots.set(targetId,
+document.addEventListener('DOMContentLoaded', () => {
+    setupMyDot();
+    
+    // Add WebRTC code for peer-to-peer connection
+});
