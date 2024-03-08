@@ -38,6 +38,15 @@ function setupMyDot() {
       }
     }
   }, updateRate);
+
+  window.addEventListener('resize', () => {
+    const currentX = (window.innerWidth - myDot.clientWidth) / 2;
+    const currentY = (window.innerHeight - myDot.clientHeight) / 2;
+    moveDotTo(myDot, currentX, currentY);
+
+    clickX = currentX + myDot.clientWidth / 2;
+    clickY = currentY + myDot.clientHeight / 2;
+  });
 }
 
 // ... (이전 코드와 동일한 WebRTC 관련 코드) ...
