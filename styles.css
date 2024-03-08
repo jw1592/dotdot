@@ -28,4 +28,8 @@ body {
     font-size: 8px;
     text-align: center;
     text-decoration: underline;
+    position: absolute; /* 추가 */
+    bottom: -15px; /* 추가 */
+    width: 100%; /* 추가 */
 }
+
