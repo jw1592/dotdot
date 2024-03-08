@@ -1,6 +1,9 @@
+const animals = ["tiger", "elephant", "lion", "zebra", "giraffe", "monkey", "panda"];
 const dotWrapper = document.querySelector('.dotWrapper');
 const localDots = new Map();
 const remoteDots = new Map();
+const localId = Date.now().toString();
+const myPeer = new Peer(localId);
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -16,7 +19,7 @@ function createDot(id, nicknameText, color) {
     dot.id = id;
     dot.className = "dot";
 
-    if (id === socket.id) {
+    if (id === localId) {
         dot.classList.add("local");
     }
 
@@ -42,33 +45,15 @@ const speed = 20;
 const updateRate = 1000 / 60;
 
 function setupMyDot() {
-    const myDot = createDot(socket.id);
+    const myDot = createDot(localId);
     dotWrapper.appendChild(myDot);
-    localDots.set(socket.id, myDot);
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-    setupMyDot();
-    const socket = io();
+    // Connect to the dot with the nickname as its ID
+    const targetId = myDot.firstChild.innerText;
+    const conn = myPeer.connect(targetId);
+    console.log('Peer connection opened:', targetId);
 
-    socket.on("add-dot", (data) => {
-        const dot = createDot(data.id, data.nickname, data.color);
+    conn.on('open', () => {
+        const dot = createDot(targetId);
         dotWrapper.appendChild(dot);
-        remoteDots.set(data.id, dot);
-    });
-
-    socket.on("move-dot", (data) => {
-        const dot = remoteDots.get(data.id);
-        if (dot) {
-            moveDotTo(dot, data.x, data.y);
-        }
-    });
-
-    socket.on("remove-dot", (data) => {
-        const dot = remoteDots.get(data.id);
-        if (dot) {
-            dot.remove();
-            remoteDots.delete(data.id);
-        }
-    });
-});
+        remoteDots.set(targetId,
