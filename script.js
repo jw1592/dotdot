@@ -41,93 +41,38 @@ function setupMyDot() {
   dotWrapper.appendChild(myDot);
   localDots.set(localId, myDot);
 
-  document.addEventListener("mousemove", (e) => {
-    moveDotTo(myDot, e.clientX, e.clientY);
-    broadcastDotMovement(myDot);
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  moveDotTo(myDot, centerX, centerY);
+
+  let clickX, clickY;
+  document.addEventListener("click", (e) => {
+    clickX = e.clientX;
+    clickY = e.clientY;
   });
-}
 
-// WebRTC data channel functions
-const peerConnections = new Map();
-const dataChannels = new Map();
+  const speed = 20; // px per second
+  const updateRate = 1000 / 60; // 60fps
+  setInterval(() => {
+    if (typeof clickX !== "undefined" && typeof clickY !== "undefined") {
+      const rect = myDot.getBoundingClientRect();
+      const currentX = rect.x;
+      const currentY = rect.y;
 
-async function broacastHello() {
-  console.log("Broadcasting hello");
-}
-
-async function createPeerConnection(targetId) {
-  const peerConnection = new RTCPeerConnection();
-
-  const dataChannel = peerConnection.createDataChannel('dotMovement');
-  dataChannels.set(targetId, dataChannel);
-
-  dataChannel.onopen = (e) => {
-    console.log("Data channel opened:", targetId);
-  }
-
-  dataChannel.onclose = (e) => {
-    console.log("Data channel closed:", targetId);
-  }
-
-  dataChannel.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    if (data.type === "add-dot") {
-      const dot = createDot(data.id, data.nickname, data.color);
-      dotWrapper.appendChild(dot);
-      remoteDots.set(data.id, dot);
-    } else if (data.type === "move-dot") {
-      const dot = remoteDots.get(data.id);
-      if (dot) {
-        moveDotTo(dot, data.x, data.y);
+      const distanceX = clickX - currentX;
+      const distanceY = clickY - currentY;
+      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      if (distance > 1) {
+        const moveX = currentX + distanceX * speed * updateRate / 1000 / distance;
+        const moveY = currentY + distanceY * speed * updateRate / 1000 / distance;
+        moveDotTo(myDot, moveX, moveY);
+        broadcastDotMovement(myDot);
       }
     }
-  }
-  
-  peerConnection.onicecandidate = ({candidate}) => {
-    console.log("New ICE candidate:", candidate);
-  }
-
-  peerConnections.set(targetId, peerConnection);
-  return peerConnection;
+  }, updateRate);
 }
 
-function broadcastDotMovement(myDot) {
-  const rect = myDot.getBoundingClientRect();
-  dataChannels.forEach((dataChannel, targetId) => {
-    const data = {
-      type: "move-dot",
-      id: localId,
-      x: rect.x,
-      y: rect.y
-    };
-    dataChannel.send(JSON.stringify(data));
-  });
-}
-
-// The following function is for demonstration purposes and is not a production ready signaling server solution
-async function hackySignaling() {
-  const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
-  const data = await response.json();
-  const dummyId = data.id.toString();
-  const peerConnection = await createPeerConnection(dummyId);
-  
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-
-  await new Promise(resolve => setTimeout(resolve, 2000)); // simulate signaling delay
-
-  peerConnection.setRemoteDescription(peerConnection.localDescription);
-  peerConnection.addIceCandidate(null);
-
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-
-  await new Promise(resolve => setTimeout(resolve, 2000)); // simulate signaling delay
-
-  peerConnection.setRemoteDescription(peerConnection.localDescription);
-
-  broacastHello();
-}
+// ... (WebRTC-related code) ...
 
 document.addEventListener('DOMContentLoaded', () => {
   setupMyDot();
