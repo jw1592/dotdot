@@ -1,34 +1,44 @@
-// app.js
-
-// Create a map using Leaflet.js
-const map = L.map('map').setView([0, 0], 1); // Default location: World view
-
-// Add a tile layer (you can choose any other tile provider)
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-// Initialize an empty array to store user markers
-const userMarkers = [];
-
-// Function to add a user marker
-function addUserMarker(lat, lng, nickname) {
-    const marker = L.circleMarker([lat, lng], { radius: 5, color: '#0074D9' }).addTo(map);
-    userMarkers.push(marker);
-
-    // Add nickname as a tooltip
-    marker.bindTooltip(nickname, { permanent: true, direction: 'top', className: 'user-nickname' });
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 }
 
-// Simulate user connections (you can replace this with actual WebRTC logic)
-addUserMarker(0, 0, 'Tiger_123'); // User 1
-addUserMarker(10, 20, 'Elephant_456'); // User 2
-addUserMarker(-30, 15, 'Giraffe_789'); // User 3
-
-// You can add more users by calling addUserMarker(lat, lng, nickname) with their coordinates and nicknames
-
-// Center the map on the average location of all users
-if (userMarkers.length > 0) {
-    const bounds = L.latLngBounds(userMarkers.map(marker => marker.getLatLng()));
-    map.fitBounds(bounds);
+function getRandomAnimalName() {
+    var animals = ["dog", "cat", "lion", "tiger", "elephant", "penguin", "giraffe", "camel", "rabbit", "wolf", "fox", "bear", "deer", "koala", "kangaroo", "rhino", "hippopotamus", "zebra", "monkey", "gorilla"];
+    var name = animals[Math.floor(Math.random() * animals.length)] + (Math.random() * 100000).toFixed();
+    return name;
 }
+
+function createUserPoint(username, color) {
+    var pointDiv = $('<div>', {
+        'class': 'user-point',
+        'style': `background-color: ${color}; width: 10px; height: 10px; left: 50%; top: 50%;`,
+    });
+    var nameDiv = $('<div>', {
+        'class': 'username',
+        'html': username,
+    });
+    if (isMyNickname(username)) {
+        nameDiv.addClass('underline');
+    }
+    pointDiv.append(nameDiv);
+    $('body').append(pointDiv);
+    return pointDiv;
+}
+
+function isMyNickname(nickname) {
+    // Add logic to check if the passed nickname is the user's own nickname
+}
+
+// Initialize WebRTC connection to get data about all users
+// Create a user point for each connected user using createUserPoint()
+// Update position and color of user points according to received WebRTC data
+
+// Add event listeners to handle user interaction, such as clicking and moving
+// Update the user's point position and send the new position data over the WebRTC connection
+
+// Add event listeners to handle user profile display and input, such as changing the color or nickname
